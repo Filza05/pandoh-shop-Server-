@@ -28,38 +28,26 @@ export const checkUserEmail = async (email: string): Promise<boolean> => {
   }
 };
 
-export const hashPassword = (
-  signInFormData: SignUpFormData
-): SignUpFormData => {
+export async function hashPassword(
+  password: string,
+  saltRounds: number = 10
+): Promise<string> {
+  const salt = await bcrypt.genSalt(saltRounds);
+  const hash = await bcrypt.hash(password, salt);
 
-  console.log(signInFormData)
-  bcrypt.hash(signInFormData.password, 12, (err, hash) => {
-    if (err) {
-      throw new Error("cannot hash password");
-    } else {
-      signInFormData.password = hash;
-    }
-    return signInFormData
-  });
-  
-  /* chat section 
-  ab karain
-  */
+  return hash;
+}
 
-  return signInFormData;
-};
-
-export function compareHashedPasswords(enteredPassword: string, storedPassword: string): boolean {
-  bcrypt.compare(enteredPassword, storedPassword, (err, isMatch) => {
-  if (err) {
-    throw new Error("error comparing passwords")
-  } else if (isMatch) {
-    // Password matches!
-    return true
-  } else {
-    // Password doesn't match!
-    return false
+export async function comparePassword(
+  enteredPassword: string,
+  storedHash: string
+): Promise<boolean> {
+  try {
+    // Compare the entered password with the stored hash
+    const isMatch = await bcrypt.compare(enteredPassword, storedHash);
+    return isMatch;
+  } catch (error) {
+    console.error(error); // Handle any errors during comparison
+    return false; // Return false in case of errors
   }
-  });
-  return false;
 }
