@@ -31,13 +31,35 @@ export const checkUserEmail = async (email: string): Promise<boolean> => {
 export const hashPassword = (
   signInFormData: SignUpFormData
 ): SignUpFormData => {
-  bcrypt.hash(signInFormData.password, 10, (err, hash) => {
+
+  console.log(signInFormData)
+  bcrypt.hash(signInFormData.password, 12, (err, hash) => {
     if (err) {
       throw new Error("cannot hash password");
     } else {
       signInFormData.password = hash;
     }
+    return signInFormData
   });
+  
+  /* chat section 
+  ab karain
+  */
 
   return signInFormData;
 };
+
+export function compareHashedPasswords(enteredPassword: string, storedPassword: string): boolean {
+  bcrypt.compare(enteredPassword, storedPassword, (err, isMatch) => {
+  if (err) {
+    throw new Error("error comparing passwords")
+  } else if (isMatch) {
+    // Password matches!
+    return true
+  } else {
+    // Password doesn't match!
+    return false
+  }
+  });
+  return false;
+}

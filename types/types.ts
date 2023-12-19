@@ -10,3 +10,5 @@ export type RequestHandlerFunction = (
   req: Request,
   res: Response
 ) => Promise<Response>;
+
+export type QueryResult<T> = Promise<T[]>;
