@@ -1,11 +1,15 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import { Router } from "express-serve-static-core";
+import { UserSignUp, UserSignIn } from "../controllers/UserAuthenticationController";
+
 
 const router: Router = express.Router()
+//SIGN UP ROUTE
+router.post("/sign-up-user", UserSignUp);
 
-router.get("/", (req: Request, res: Response) => {
-    res.send("Express + TypeScript Server");
-  });
+//SIGN IN ROUTE
+router.post("/sign-in-user", UserSignIn)
+
 
 export default router;
 
