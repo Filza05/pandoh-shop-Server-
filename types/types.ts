@@ -1,9 +1,12 @@
-import { Request, Response } from "express"
+import { Request, Response } from "express";
 
-export type SignInFormData = {
-    email: string,
-    username: string,
-    password: string
-}
+export type SignUpFormData = {
+  email: string;
+  username: string;
+  password: string;
+};
 
-export type RequestHandlerFunction = (req: Request, res: Response) => Promise<Response>
+export type RequestHandlerFunction = (
+  req: Request,
+  res: Response
+) => Promise<Response>;

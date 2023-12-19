@@ -1,76 +1,70 @@
-import { RequestHandlerFunction, SignInFormData } from "../types/types";
+import { RequestHandlerFunction, SignUpFormData } from "../types/types";
+import {
+  checkUsername,
+  checkUserEmail,
+  hashPassword,
+} from "./utils/HelperFunctions";
 import { getDatabase } from "../utils/db";
-import { initializeDatabase } from "../utils/db";
-import bcrypt from "bcrypt"
+import { SignKeyObjectInput } from "crypto";
 
-initializeDatabase()
-const db = getDatabase()
+const db = getDatabase();
 
 export const UserSignUp: RequestHandlerFunction = async (req, res) => {
-    const user: SignInFormData = req.body;
-    try {
-        const [result] = await db.query("SELECT * FROM users WHERE USERNAME = ?", [user.username]);
+  const user: SignUpFormData = req.body;
 
-        if ('length' in result && result.length !== 0) {
-            return res!.status(400).json({ error: 'User already exists' });
-        }
-    } catch (error) {
-        console.error("Error querying the database:", error);
-        return res!.status(500).json({ error: 'Internal Server Error' });
+  try {
+    const userExists = await checkUsername(user.username);
+    if (userExists) {
+      return res.status(400).json({ error: "User Already Exists" });
     }
 
-    try {
-        const [result] = await db.query("SELECT * FROM users WHERE EMAIL = ?", [user.email]);
-
-        if ('length' in result && result.length !== 0) {
-            return res!.status(400).json({ error: 'Email already exists' });
-        }
-    } catch (error) {
-        console.error("Error querying the database:", error);
-        return res!.status(500).json({ error: 'Internal Server Error' });
+    const emailExists = await checkUserEmail(user.email);
+    if (emailExists) {
+      return res.status(400).json({ error: "email already exists" });
     }
 
+    var hashedUser: SignUpFormData;
     try {
-        await db.query(
-            "insert into user (EMAIL, USERNAME, PASSWORD) values (?)",
-            [user]
-        );
-        alert("SUCCESSFULLY REGISTERED")
-        return res.status(200).json({ message: 'Registration Successful' })
+      hashedUser = hashPassword(user);
     } catch (error) {
-        console.error("Error querying the database:", error);
-        return res!.status(500).json({ error: 'Internal Server Error' });
+      return res.status(400).json("Hashing error");
     }
 
-}
+    //INSERTING USER INTO DB
+    await db.query("insert into user (EMAIL, USERNAME, PASSWORD) values (?)", [
+      hashedUser,
+    ]);
+    return res.status(200).json({ message: "Registration Successful" });
+  } catch (error) {
+    console.error("Error querying the database:", error);
+    return res!.status(500).json({ error: "Internal Server Error" });
+  }
+};
 
 export const UserSignIn: RequestHandlerFunction = async (req, res) => {
-    const user = req.body;
-    console.log(user)
-    try {
-        const [result] = await db.query("SELECT * FROM users WHERE USERNAME = ?", [user.username]);
-      
-        if ('length' in result && result.length === 0) {
-          console.log("check 1");
-          return res.status(400).json({ error: 'User not found' });
-        }
-      
-      } catch (error) {
-        console.error("Error querying the database:", error);
-        console.log("POINT 1")
+  const user = req.body;
+  console.log(user);
+  try {
+    const emailExists = await checkUserEmail(user.email);
 
-        res.status(500).json({ error: 'Internal Server Error' });
-      }
-
-    try {
-        const userPassDB = await db.query("SELECT PASSWORD FROM users WHERE USERNAME = ?", [user.username]);
-        console.log(userPassDB)
-        const enteredPass = user.password;
-
-    } catch (error) {
-        console.error("Error querying the database:", error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+    if (!emailExists) {
+      return res.status(400).json({ error: "User Email not Found" });
     }
-    console.log("POINT 2")
-    return res.status(500).json({ error: 'Internal Server Error' })
-}
+  } catch (error) {
+    console.error("Error querying the database:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+
+  try {
+    const userPassDB = await db.query(
+      "SELECT PASSWORD FROM users WHERE USERNAME = ?",
+      [user.username]
+    );
+    const enteredPass = user.password;
+  } catch (error) {
+    console.error("Error querying the database:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+  console.log("POINT 2");
+  return res.status(500).json({ error: "Internal Server Error" });
+};
