@@ -9,8 +9,16 @@ const port = process.env.PORT || 5000;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+
+const corsOptions = {
+  origin: 'http://localhost:3000',
+  methods: 'GET, POST',
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
 app.use(router);
-app.use(cors);
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
 });

@@ -11,4 +11,8 @@ export type RequestHandlerFunction = (
   res: Response
 ) => Promise<Response>;
 
-export type QueryResult<T> = Promise<T[]>;
+export type UserPayload = {
+  userid: number;
+  username: string;
+  email: string;  // Add other user-related fields as needed
+}

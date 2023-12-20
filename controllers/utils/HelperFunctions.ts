@@ -1,15 +1,21 @@
 import { SignUpFormData } from "../../types/types";
 import { getDatabase } from "../../utils/db";
 import bcrypt from "bcrypt";
+import { User } from "../../types/DBTypes";
+import jwt, {Secret} from "jsonwebtoken"
+import dotenv from "dotenv";
+import { UserPayload } from "../../types/types";
+
+dotenv.config()
 
 const db = getDatabase();
 
 export const checkUsername = async (username: string): Promise<boolean> => {
-  const [result] = await db.query("SELECT * FROM users WHERE USERNAME = ?", [
+  const [result] = await db.query<User[]>("SELECT * FROM users WHERE USERNAME = ?", [
     username,
   ]);
 
-  if ("length" in result && result.length !== 0) {
+  if (result[0]) {
     return true;
   } else {
     return false;
@@ -17,11 +23,11 @@ export const checkUsername = async (username: string): Promise<boolean> => {
 };
 
 export const checkUserEmail = async (email: string): Promise<boolean> => {
-  const [result] = await db.query("SELECT * FROM users WHERE EMAIL = ?", [
+  const [result] = await db.query<User[]>("SELECT * FROM users WHERE EMAIL = ?", [
     email,
   ]);
 
-  if ("length" in result && result.length !== 0) {
+  if (result[0]) {
     return true;
   } else {
     return false;
@@ -43,11 +49,34 @@ export async function comparePassword(
   storedHash: string
 ): Promise<boolean> {
   try {
-    // Compare the entered password with the stored hash
     const isMatch = await bcrypt.compare(enteredPassword, storedHash);
     return isMatch;
   } catch (error) {
-    console.error(error); // Handle any errors during comparison
-    return false; // Return false in case of errors
+    console.error(error);
+    return false;
   }
+}
+
+export async function createJWTToken(user: User) {
+  const payload: UserPayload  = {
+    userid: user.userid,
+    username: user.username,
+    email : user.email
+  }
+  const token = jwt.sign(payload, process.env.TOKEN_KEY as string, {expiresIn: '3hr'})
+  return token
+}
+
+export async function verifyJWTToken (token: string, secretKey: Secret) : Promise<UserPayload | null> {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, secretKey, (err, decoded) => {
+      if (err) {
+        console.error('Error verifying token:', err);
+        resolve(null); // Token verification failed
+      } else {
+        const userPayload = decoded as UserPayload;
+        resolve(userPayload); // Token verified successfully
+      }
+    });
+  });
 }

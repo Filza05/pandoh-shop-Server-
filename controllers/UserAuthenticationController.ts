@@ -3,26 +3,27 @@ import {
   checkUsername,
   checkUserEmail,
   hashPassword,
+  createJWTToken
 } from "./utils/HelperFunctions";
 import { getDatabase } from "../utils/db";
 import { comparePassword } from "./utils/HelperFunctions";
+import { User } from "../types/DBTypes";
 
 const db = getDatabase();
 
 export const UserSignUp: RequestHandlerFunction = async (req, res) => {
   const user: SignUpFormData = req.body;
+  console.log(user)
   try {
     const userExists = await checkUsername(user.username);
     if (userExists) {
       return res.status(400).json({ error: "User Already Exists" });
     }
-    console.log("POINT 1");
 
     const emailExists = await checkUserEmail(user.email);
     if (emailExists) {
       return res.status(400).json({ error: "email already exists" });
     }
-    console.log("POINT 2");
 
     var hashedUser: SignUpFormData;
     try {
@@ -34,20 +35,18 @@ export const UserSignUp: RequestHandlerFunction = async (req, res) => {
           password: hashedPassword,
         };
 
-        console.log(hashedUser);
-        await db.query(
-          "insert into users (EMAIL, USERNAME, PASSWORD) values (?,?,?)",
-          [hashedUser.email, hashedUser.username, hashedUser.password]
-        );
       } else {
         return res.status(409).json({ message: "error encrypting password" });
       }
-
-      return res.status(200).json({ message: "Registration Successful" });
     } catch (error) {
       console.log(error);
       return res.status(400).json("Hashing error");
     }
+    await db.query(
+      "insert into users (EMAIL, USERNAME, PASSWORD) values (?,?,?)",
+      [hashedUser.email, hashedUser.username, hashedUser.password]
+    );
+    return res.status(200).json({ message: "Registration Successful" });
   } catch (error) {
     console.error("Error querying the database:", error);
     return res!.status(500).json({ error: "Internal Server Error" });
@@ -57,26 +56,36 @@ export const UserSignUp: RequestHandlerFunction = async (req, res) => {
  */
 
 export const UserSignIn: RequestHandlerFunction = async (req, res) => {
-  const user = req.body;
-  console.log(user);
+  const signInFormData = req.body;
   try {
-    const emailExists = await checkUserEmail(user.email);
+    const emailExists = await checkUserEmail(signInFormData.email);
 
     if (!emailExists) {
       return res.status(400).json({ error: "User Email not Found" });
     }
 
-    const [result]: any = await db.query(
+    const [result]: any = await db.query<User[]>(
       "SELECT PASSWORD FROM users WHERE EMAIL = ?",
-      [user.email]
+      [signInFormData.email]
     );
 
-    console.log(result[0].PASSWORD);
-    const enteredPass = user.password;
+    const user: User = result[0]
+    const enteredPass = signInFormData.password;
+
     const passMatch = await comparePassword(enteredPass, result[0].PASSWORD);
 
     if (passMatch) {
-      return res.status(200).json({ message: "succesfully signed in" });
+
+      const token = createJWTToken(user)
+      return res.status(200).cookie("authenticationToken",
+      token,
+        {
+          httpOnly: true,
+          maxAge: 2000000,
+        }
+      ).json({ message: "successfully signed in" })
+    }else{
+      return res.status(409).json({error: "wrong credentials"})
     }
   } catch (error) {
     console.error("Error querying the database:", error);
