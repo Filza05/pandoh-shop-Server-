@@ -6,3 +6,12 @@ export interface User extends RowDataPacket {
     email: string,
     password: string
 }
+
+export interface Product extends RowDataPacket {
+    productid?: number,
+    productname: string,
+    price: Number,
+    description: string,
+    instock: number,
+    category: string,
+}

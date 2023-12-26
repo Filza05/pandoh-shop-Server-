@@ -16,3 +16,11 @@ export type UserPayload = {
   username: string;
   email: string;  // Add other user-related fields as needed
 }
+
+export type AddProductFormData= {
+  productname: string,
+  description: string,
+  price: Number,
+  category: string,
+  images: FileList | null,
+}

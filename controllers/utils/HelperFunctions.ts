@@ -1,10 +1,10 @@
 import { SignUpFormData } from "../../types/types";
 import { getDatabase } from "../../utils/db";
 import bcrypt from "bcrypt";
-import { User } from "../../types/DBTypes";
+import { User, Product } from "../../types/DBTypes";
 import jwt, {Secret} from "jsonwebtoken"
 import dotenv from "dotenv";
-import { UserPayload } from "../../types/types";
+import { UserPayload, AddProductFormData } from "../../types/types";
 
 dotenv.config()
 
@@ -79,4 +79,16 @@ export async function verifyJWTToken (token: string, secretKey: Secret) : Promis
       }
     });
   });
+}
+
+export const checkProductExists = async (productName: string): Promise<boolean> => {
+  const [result] = await db.query<Product[]>("SELECT * FROM products WHERE productname = ?", [
+    productName,
+  ]);
+
+  if (result[0]) {
+    return true;
+  } else {
+    return false;
+  }
 }
