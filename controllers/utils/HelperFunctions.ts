@@ -1,4 +1,3 @@
-import { SignUpFormData } from "../../types/types";
 import { getDatabase } from "../../utils/db";
 import bcrypt from "bcrypt";
 import { User, Product } from "../../types/DBTypes";
