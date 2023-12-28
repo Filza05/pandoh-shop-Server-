@@ -1,10 +1,16 @@
 import express from "express";
 import { Router } from "express-serve-static-core";
-import { UserSignUp, UserSignIn } from "../controllers/UserAuthenticationController";
-import { AddProducts } from "../controllers/ProductsController";
+import {
+  UserSignUp,
+  UserSignIn,
+} from "../controllers/UserAuthenticationController";
+import {
+  AddProducts,
+  performProductChecks,
+} from "../controllers/ProductsController";
+import { upload } from "../multer.config";
 
-
-const router: Router = express.Router()
+const router: Router = express.Router();
 //SIGN UP ROUTE
 router.post("/sign-up-user", UserSignUp);
 
@@ -12,10 +18,11 @@ router.post("/sign-up-user", UserSignUp);
 router.post("/sign-in-user", UserSignIn);
 
 //ADD PRODUCTS ROUTE
-router.post("/add-product", AddProducts )
-
+router.post(
+  "/add-product",
+  performProductChecks,
+  upload.array("images"),
+  AddProducts
+);
 
 export default router;
-
-
-
