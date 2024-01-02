@@ -9,9 +9,7 @@ dotenv.config();
 
 const db = getDatabase();
 
-export const checkUsername = async (
-  username: string
-): Promise<boolean> => {
+export const checkUsername = async (username: string): Promise<boolean> => {
   const [result] = await db.query<User[]>(
     "SELECT * FROM users WHERE USERNAME = ?",
     [username]
@@ -110,11 +108,14 @@ export const generateInsertQuery = (
 ): string => {
   const query = `INSERT INTO product_images (product_id, imageURL) VALUES
   ${imagesArray.map((imageObj, index) => {
-    return `(${insertId}, ${imageObj.path})${
-      index == imagesArray.length - 1 ? ";" : ","
+    let imagePath = imageObj.path;
+    imagePath = imagePath.replace(/\\/g, "/");
+    return `(${insertId}, '${imagePath}')${
+      index + 1 == imagesArray.length ? ";" : ""
     }`;
   })}
   `;
 
+  console.log(query);
   return query;
 };

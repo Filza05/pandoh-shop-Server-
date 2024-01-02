@@ -5,12 +5,14 @@ import {
   UserSignIn,
 } from "../controllers/UserAuthenticationController";
 import {
-  AddProducts,
-  performProductChecks,
+  AddProduct,
+  FetchProducts,
+  performProductChecks
 } from "../controllers/ProductsController";
 import { upload } from "../multer.config";
 
 const router: Router = express.Router();
+
 //SIGN UP ROUTE
 router.post("/sign-up-user", UserSignUp);
 
@@ -20,9 +22,12 @@ router.post("/sign-in-user", UserSignIn);
 //ADD PRODUCTS ROUTE
 router.post(
   "/add-product",
-  performProductChecks,
   upload.array("images"),
-  AddProducts
+  performProductChecks,
+  AddProduct
 );
+
+//Fetch all Added Products Route
+router.get("/get-products", FetchProducts)
 
 export default router;

@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import router from "./Routes/routes";
 import bodyParser from "body-parser";
+import multer from "multer";
 
 const app: Express = express();
 const port = process.env.PORT || 4000;

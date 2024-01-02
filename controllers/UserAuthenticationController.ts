@@ -65,17 +65,16 @@ export const UserSignIn: RequestHandlerFunction = async (req, res) => {
     }
 
     const [result]: any = await db.query<User[]>(
-      "SELECT PASSWORD FROM users WHERE EMAIL = ?",
+      "SELECT * FROM users WHERE EMAIL = ?",
       [signInFormData.email]
     );
-
-    const user: User = result[0]
+  
+    const user: User = result[0] 
     const enteredPass = signInFormData.password;
 
-    const passMatch = await comparePassword(enteredPass, result[0].PASSWORD);
+    const passMatch = await comparePassword(enteredPass, user.password);
 
     if (passMatch) {
-
       const token = createJWTToken(user)
       return res.status(200).cookie("authenticationToken",
       token,
@@ -83,7 +82,11 @@ export const UserSignIn: RequestHandlerFunction = async (req, res) => {
           httpOnly: true,
           maxAge: 2000000,
         }
-      ).json({ message: "successfully signed in" })
+      ).send({message: "Sign in successful", signedInUser: {
+        username: user.username,
+        userId: user.userid,
+        email: user.email
+      }})
     }else{
       return res.status(409).json({error: "wrong credentials"})
     }
@@ -93,3 +96,4 @@ export const UserSignIn: RequestHandlerFunction = async (req, res) => {
   }
   return res.status(200).json({ message: "WHATEVER" });
 };
+
