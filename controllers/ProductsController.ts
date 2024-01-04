@@ -8,7 +8,10 @@ import { AddProductFormData } from "../types/types";
 import { ResultSetHeader } from "mysql2";
 import { Request, Response, NextFunction } from "express";
 import { FETCH_PRODUCTS_QUERY } from "../constants/queries";
+import Stripe from "stripe";
+require("dotenv").config();
 
+const stripe = new Stripe(process.env.STRIPE_SECRET!);
 const db = getDatabase();
 
 //HELPER MIDDLEWARE
@@ -70,7 +73,7 @@ export const AddProduct: RequestHandlerFunction = async (
       db.query(insertImageQuery);
     }
 
-    return res.status(200).send({ message: "Product added Successful"});
+    return res.status(200).send({ message: "Product added Successful" });
   } catch (error) {
     console.error("Couldn't add to database", error);
     return res!.status(500).json({ error: "Couldn't add to database" });
@@ -90,4 +93,41 @@ export const FetchProducts: RequestHandlerFunction = async (
   }
 
   return res;
+};
+
+export const createStripeCheckoutSession = async (
+  req: Request,
+  res: Response
+) => {
+  const { products } = req.body;
+  const lineItems = products.map((product: any) => {
+    return {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: product.productname,
+          description: product.description,
+          // images: [`${product.images[0].image_url}`],
+        },
+        unit_amount: Math.round(product.price * 100),
+      },
+      quantity: product.quantity,
+    };
+  });
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      metadata: products,
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      success_url: "http://whatever.com",
+      cancel_url: "http://whatever.com",
+    });
+
+    return res.status(200).json({ id: session.id });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ error: "Can't process payment" });
+  }
 };

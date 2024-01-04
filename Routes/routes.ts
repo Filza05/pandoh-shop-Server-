@@ -7,9 +7,10 @@ import {
 import {
   AddProduct,
   FetchProducts,
-  performProductChecks
+  performProductChecks,
 } from "../controllers/ProductsController";
 import { upload } from "../multer.config";
+import { createStripeCheckoutSession } from "../controllers/ProductsController";
 
 const router: Router = express.Router();
 
@@ -27,7 +28,9 @@ router.post(
   AddProduct
 );
 
+router.post("/create-checkout-session", createStripeCheckoutSession);
+
 //Fetch all Added Products Route
-router.get("/get-products", FetchProducts)
+router.get("/get-products", FetchProducts);
 
 export default router;

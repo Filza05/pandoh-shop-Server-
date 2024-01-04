@@ -14,13 +14,13 @@ export type RequestHandlerFunction = (
 export type UserPayload = {
   userid: number;
   username: string;
-  email: string;  // Add other user-related fields as needed
-}
+  email: string;
+};
 
-export type AddProductFormData= {
-  productname: string,
-  description: string,
-  price: Number,
-  category: string,
-  images: FileList | null,
-}
+export type AddProductFormData = {
+  productname: string;
+  description: string;
+  price: Number;
+  category: string;
+  images: FileList | null;
+};
