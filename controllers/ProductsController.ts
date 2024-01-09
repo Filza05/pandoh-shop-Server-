@@ -2,16 +2,15 @@ import { getDatabase } from "../utils/db";
 import { RequestHandlerFunction } from "../types/types";
 import {
   checkProductExists,
-  generateInsertQuery,
+  generateImagesInsertQuery,
 } from "./utils/HelperFunctions";
 import { AddProductFormData } from "../types/types";
 import { ResultSetHeader } from "mysql2";
 import { Request, Response, NextFunction } from "express";
 import { FETCH_PRODUCTS_QUERY } from "../constants/queries";
-import Stripe from "stripe";
-require("dotenv").config();
+import { stripe } from "../stripe";
+import { removeExtraAttributesFromProducts } from "./utils/HelperFunctions";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET!);
 const db = getDatabase();
 
 //HELPER MIDDLEWARE
@@ -65,7 +64,7 @@ export const AddProduct: RequestHandlerFunction = async (
     const data: ResultSetHeader = response[0];
 
     if (uploadedImages && Array.isArray(uploadedImages)) {
-      const insertImageQuery = generateInsertQuery(
+      const insertImageQuery = generateImagesInsertQuery(
         data.insertId,
         uploadedImages
       );
@@ -100,6 +99,9 @@ export const createStripeCheckoutSession = async (
   res: Response
 ) => {
   const { products } = req.body;
+  const { userId } = req.body;
+
+  console.log(userId);
   const lineItems = products.map((product: any) => {
     return {
       price_data: {
@@ -107,7 +109,7 @@ export const createStripeCheckoutSession = async (
         product_data: {
           name: product.productname,
           description: product.description,
-          // images: [`${product.images[0].image_url}`],
+          // images: [`http://localhost:4000/${product.images[0].image_url}`],
         },
         unit_amount: Math.round(product.price * 100),
       },
@@ -115,9 +117,14 @@ export const createStripeCheckoutSession = async (
     };
   });
 
+  const productsData = removeExtraAttributesFromProducts(products);
+
   try {
     const session = await stripe.checkout.sessions.create({
-      metadata: products,
+      metadata: {
+        products: JSON.stringify(productsData),
+        userid: userId,
+      },
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
@@ -129,5 +136,33 @@ export const createStripeCheckoutSession = async (
   } catch (error) {
     console.log(error);
     res.status(400).json({ error: "Can't process payment" });
+  }
+};
+
+//Updating Products in database
+export const UpdateProduct: RequestHandlerFunction = async (
+  req: Request,
+  res: Response
+) => {
+  const productid = parseInt(req.params.productid);
+  const newProduct = req.body;
+
+  try {
+    let response = db.query<ResultSetHeader>(
+      `UPDATE products SET productname = ? price = ? description = ? instock = ? WHERE productid = ?;
+  `,
+      [
+        newProduct.productname,
+        newProduct.price,
+        newProduct.description,
+        newProduct.instock,
+        productid,
+      ]
+    );
+
+    return res.status(200).json({ message: "Product Updated Successfully" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "could not access database" });
   }
 };

@@ -102,7 +102,7 @@ export const checkProductExists = async (
   }
 };
 
-export const generateInsertQuery = (
+export const generateImagesInsertQuery = (
   insertId: Number,
   imagesArray: Express.Multer.File[]
 ): string => {
@@ -116,6 +116,22 @@ export const generateInsertQuery = (
   })}
   `;
 
-  console.log(query);
+  return query;
+};
+
+export function removeExtraAttributesFromProducts(products: Product[]) {
+  return products.map(({ productid, quantity }) => ({ productid, quantity }));
+}
+
+export const insertProductsInOrderQuery = (
+  orderId: number,
+  products: { productid: number; quantity: number }[]
+) => {
+  const query = `INSERT INTO order_items (orderid, productid, quantity) VALUES ${products.map(
+    (product) => {
+      return `(${orderId}, ${product.productid}, ${product.quantity})`;
+    }
+  )};`;
+
   return query;
 };
