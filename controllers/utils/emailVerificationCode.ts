@@ -9,10 +9,11 @@ const sendVerificationCode = async (
   email: SignUpFormData["email"]
 ): Promise<void> => {
   return new Promise(async (resolve, reject) => {
+    console.log(process.env.EMAIL_APP_PASSWORD);
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "doritozz807@gmail.com",
+        user: "doritozz349@gmail.com",
         pass: process.env.EMAIL_APP_PASSWORD || "",
       },
     });
@@ -20,21 +21,21 @@ const sendVerificationCode = async (
 
     try {
       try {
-        const updateQuery = await db.query(
-          `
-        UPDATE pandoh_shop.users
-        SET verificationcode = ?
-        WHERE email = ?;
-      `,
-          [verificationCode, email]
-        );
-        console.log("Verification code added to the database successfully");
+        //   const updateQuery = await db.query(
+        //     `
+        //   UPDATE pandoh_shop.users
+        //   SET verificationcode = ?
+        //   WHERE email = ?;
+        // `,
+        //     [verificationCode, email]
+        //   );
+        //   console.log("Verification code added to the database successfully");
       } catch (err) {
         console.error("Couldn't add to the database", err);
       }
 
       const mailOptions = {
-        from: "doritozz807@gmail.com",
+        from: "doritozz349@gmail.com",
         to: email,
         subject: "Email Verification",
         html: `<p>Your verification code is: <span style="background-color: yellow;">${verificationCode}</span></p>`,

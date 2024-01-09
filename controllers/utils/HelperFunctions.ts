@@ -60,7 +60,6 @@ export async function comparePassword(
 
 export async function createJWTToken(user: User) {
   const payload: UserPayload = {
-    userid: user.userid,
     username: user.username,
     email: user.email,
   };

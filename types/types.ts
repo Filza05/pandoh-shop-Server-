@@ -12,7 +12,6 @@ export type RequestHandlerFunction = (
 ) => Promise<Response>;
 
 export type UserPayload = {
-  userid: number;
   username: string;
   email: string;
 };

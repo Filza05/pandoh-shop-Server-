@@ -1,8 +1,10 @@
 import express from "express";
 import { Router } from "express-serve-static-core";
 import {
-  UserSignUp,
+  PerformSignUpChecks,
   UserSignIn,
+  VerifyEmail,
+  SignUpUser,
 } from "../controllers/UserAuthenticationController";
 import {
   AddProduct,
@@ -17,11 +19,16 @@ import {
   getAllOrders,
   updateOrderStatus,
 } from "../controllers/OrdersController";
+import { createUserAuthToken } from "../controllers/UserAuthenticationController";
 
 const router: Router = express.Router();
 
 //SIGN UP ROUTE
-router.post("/sign-up-user", UserSignUp);
+router.post("/perform-sign-up-checks", PerformSignUpChecks);
+
+router.post("/verify-email", VerifyEmail);
+
+router.post("/sign-up-user", SignUpUser);
 
 //SIGN IN ROUTE
 router.post("/sign-in-user", UserSignIn);
@@ -48,5 +55,7 @@ router.post("/update-order-status/:orderid", updateOrderStatus);
 
 //Updating Products for Admin
 router.post("update-product/:productid", UpdateProduct);
+
+router.post("/create-user-token", createUserAuthToken);
 
 export default router;
