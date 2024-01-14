@@ -101,7 +101,6 @@ export const createStripeCheckoutSession = async (
   const { products } = req.body;
   const { userId } = req.body;
 
-  console.log(userId);
   const lineItems = products.map((product: any) => {
     return {
       price_data: {
@@ -145,24 +144,35 @@ export const UpdateProduct: RequestHandlerFunction = async (
   res: Response
 ) => {
   const productid = parseInt(req.params.productid);
-  const newProduct = req.body;
+  const newInStock = req.body.newInstock;
+
+  console.log(productid, newInStock);
 
   try {
     let response = db.query<ResultSetHeader>(
-      `UPDATE products SET productname = ? price = ? description = ? instock = ? WHERE productid = ?;
+      `UPDATE products SET instock = ? WHERE productid = ?;
   `,
-      [
-        newProduct.productname,
-        newProduct.price,
-        newProduct.description,
-        newProduct.instock,
-        productid,
-      ]
+      [newInStock, productid]
     );
 
-    return res.status(200).json({ message: "Product Updated Successfully" });
+    return res
+      .status(200)
+      .json({ message: "Product Stock Updated Successfully" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "could not access database" });
+  }
+};
+
+export const DeleteProduct: RequestHandlerFunction = async (
+  req: Request,
+  res: Response
+) => {
+  const productid = parseInt(req.params.productid);
+  try {
+    db.query(`DELETE FROM products WHERE productid = ${productid};`);
+    return res.status(200).json({ message: "product deleted successfully" });
+  } catch (error) {
+    return res.status(400).json({ error: "error deleting the product" });
   }
 };

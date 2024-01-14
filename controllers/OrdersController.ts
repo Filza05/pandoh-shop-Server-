@@ -5,6 +5,7 @@ import { ResultSetHeader } from "mysql2";
 import { insertProductsInOrderQuery } from "./utils/HelperFunctions";
 import { FETCH_ALL_ORDERS_QUERY } from "../constants/queries";
 import { Order } from "../types/DBTypes";
+import { generateGetUserOrderQuery } from "../utils/generateQueries";
 
 const db = getDatabase();
 
@@ -73,5 +74,26 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "could not access database" });
+  }
+};
+
+export const getUserOrders = async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.id);
+  const userOrdersQuery = generateGetUserOrderQuery(userId);
+  try {
+    const [response] = await db.query<Order[]>(userOrdersQuery);
+    return res.status(200).json({ userOrders: response });
+  } catch (error) {
+    return res.status(400).json({ error: "could'nt fetch data" });
+  }
+};
+
+export const deleteOrder = async (req: Request, res: Response) => {
+  const orderid = parseInt(req.params.orderid);
+  try {
+    await db.query(`DELETE FROM orders WHERE orderid = ${orderid}`);
+    return res.status(200).json({ message: "order has been deleted." });
+  } catch (error) {
+    return res.status(400).json({ error: "something went wrong" });
   }
 };

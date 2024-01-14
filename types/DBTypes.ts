@@ -34,4 +34,5 @@ type OrderItem = {
   product_id: number;
   description: string;
   product_name: string;
+  category: string;
 };

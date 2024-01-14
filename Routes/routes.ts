@@ -8,6 +8,7 @@ import {
 } from "../controllers/UserAuthenticationController";
 import {
   AddProduct,
+  DeleteProduct,
   FetchProducts,
   performProductChecks,
   UpdateProduct,
@@ -18,6 +19,8 @@ import {
   handleSuccesfulPayment,
   getAllOrders,
   updateOrderStatus,
+  getUserOrders,
+  deleteOrder,
 } from "../controllers/OrdersController";
 import { createUserAuthToken } from "../controllers/UserAuthenticationController";
 
@@ -50,12 +53,18 @@ router.post("/webhook", handleSuccesfulPayment);
 //Retrieve all Orders
 router.get("/get-all-orders", getAllOrders);
 
-//Updating Orders for Admin
+//Updating Orders for Admin`
 router.post("/update-order-status/:orderid", updateOrderStatus);
 
 //Updating Products for Admin
-router.post("update-product/:productid", UpdateProduct);
+router.post("/update-product/:productid", UpdateProduct);
 
 router.post("/create-user-token", createUserAuthToken);
+
+router.get("/get-user-orders/:id", getUserOrders);
+
+router.post("/delete-order/:orderid", deleteOrder);
+
+router.post("/delete-product/:productid", DeleteProduct);
 
 export default router;
