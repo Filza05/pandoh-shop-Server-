@@ -3,6 +3,7 @@ import cors from "cors";
 import router from "./Routes/routes";
 import bodyParser from "body-parser";
 import path from "path";
+import cookieParser from "cookie-parser";
 
 const app: Express = express();
 const port = process.env.PORT || 4000;
@@ -16,6 +17,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(router);
 app.use(
   "/public/images",

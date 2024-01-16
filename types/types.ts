@@ -14,6 +14,7 @@ export type RequestHandlerFunction = (
 export type UserPayload = {
   username: string;
   email: string;
+  isAdmin: boolean;
 };
 
 export type AddProductFormData = {

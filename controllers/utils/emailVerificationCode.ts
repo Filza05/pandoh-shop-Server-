@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { storeVerificationCodeToDB } from "./HelperFunctions";
 import { SignUpFormData } from "../../types/types";
 import { getDatabase } from "../../utils/db";
 
@@ -20,20 +21,6 @@ const sendVerificationCode = async (
     const verificationCode = Math.floor(Math.random() * 900000) + 100000;
 
     try {
-      try {
-        //   const updateQuery = await db.query(
-        //     `
-        //   UPDATE pandoh_shop.users
-        //   SET verificationcode = ?
-        //   WHERE email = ?;
-        // `,
-        //     [verificationCode, email]
-        //   );
-        //   console.log("Verification code added to the database successfully");
-      } catch (err) {
-        console.error("Couldn't add to the database", err);
-      }
-
       const mailOptions = {
         from: "doritozz349@gmail.com",
         to: email,
@@ -41,15 +28,19 @@ const sendVerificationCode = async (
         html: `<p>Your verification code is: <span style="background-color: yellow;">${verificationCode}</span></p>`,
       };
 
-      transporter.sendMail(mailOptions, (error: Error | null, info: any) => {
-        if (error) {
-          console.error(error);
-          reject(error);
-        } else {
-          console.log("Email sent: " + info.response);
-          resolve();
+      transporter.sendMail(
+        mailOptions,
+        async (error: Error | null, info: any) => {
+          if (error) {
+            console.error(error);
+            reject(error);
+          } else {
+            console.log("Email sent: " + info.response);
+            await storeVerificationCodeToDB(email, verificationCode);
+            resolve();
+          }
         }
-      });
+      );
     } catch (error) {
       console.error(error);
       reject(error);

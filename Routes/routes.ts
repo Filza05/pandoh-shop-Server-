@@ -5,6 +5,7 @@ import {
   UserSignIn,
   VerifyEmail,
   SignUpUser,
+  VerifyToken,
 } from "../controllers/UserAuthenticationController";
 import {
   AddProduct,
@@ -12,6 +13,8 @@ import {
   FetchProducts,
   performProductChecks,
   UpdateProduct,
+  AddUserReview,
+  GetProductReviews,
 } from "../controllers/ProductsController";
 import { upload } from "../multer.config";
 import { createStripeCheckoutSession } from "../controllers/ProductsController";
@@ -66,5 +69,11 @@ router.get("/get-user-orders/:id", getUserOrders);
 router.post("/delete-order/:orderid", deleteOrder);
 
 router.post("/delete-product/:productid", DeleteProduct);
+
+router.post("/add-user-review/:userid", AddUserReview);
+
+router.get("/get-product-reviews/:productid", GetProductReviews);
+
+router.get("/profile", VerifyToken);
 
 export default router;

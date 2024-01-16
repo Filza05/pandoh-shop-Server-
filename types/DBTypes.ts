@@ -27,6 +27,10 @@ export interface Order extends RowDataPacket {
   order_items: OrderItem[];
 }
 
+export interface VerificationCode extends RowDataPacket {
+  verification_code: number;
+}
+
 type OrderItem = {
   price: number;
   images: string[];

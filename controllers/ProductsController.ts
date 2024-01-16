@@ -10,6 +10,7 @@ import { Request, Response, NextFunction } from "express";
 import { FETCH_PRODUCTS_QUERY } from "../constants/queries";
 import { stripe } from "../stripe";
 import { removeExtraAttributesFromProducts } from "./utils/HelperFunctions";
+import { generateFetchReviewsQuery } from "../utils/generateQueries";
 
 const db = getDatabase();
 
@@ -137,7 +138,6 @@ export const createStripeCheckoutSession = async (
     res.status(400).json({ error: "Can't process payment" });
   }
 };
-
 //Updating Products in database
 export const UpdateProduct: RequestHandlerFunction = async (
   req: Request,
@@ -145,9 +145,6 @@ export const UpdateProduct: RequestHandlerFunction = async (
 ) => {
   const productid = parseInt(req.params.productid);
   const newInStock = req.body.newInstock;
-
-  console.log(productid, newInStock);
-
   try {
     let response = db.query<ResultSetHeader>(
       `UPDATE products SET instock = ? WHERE productid = ?;
@@ -174,5 +171,40 @@ export const DeleteProduct: RequestHandlerFunction = async (
     return res.status(200).json({ message: "product deleted successfully" });
   } catch (error) {
     return res.status(400).json({ error: "error deleting the product" });
+  }
+};
+
+export const AddUserReview: RequestHandlerFunction = async (
+  req: Request,
+  res: Response
+) => {
+  const body = req.body;
+  const userid = req.params.userid;
+
+  try {
+    await db.query(
+      `INSERT INTO user_reviews (user_id, product_id, review, rating) VALUES (${userid}, ${body.productid}, '${body.text}', ${body.rating});`
+    );
+
+    return res.status(200).json({ message: "review added" });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ error: "couldn't add review" });
+  }
+};
+
+export const GetProductReviews: RequestHandlerFunction = async (
+  req: Request,
+  res: Response
+) => {
+  const { productid } = req.params;
+
+  try {
+    const [response] = await db.query(generateFetchReviewsQuery(productid));
+    console.log(response);
+    return res.status(200).json({ reviews: response });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ error: "could'nt get reviews" });
   }
 };

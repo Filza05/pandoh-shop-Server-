@@ -3,10 +3,9 @@ import bcrypt from "bcrypt";
 import { User, Product } from "../../types/DBTypes";
 import jwt, { Secret } from "jsonwebtoken";
 import dotenv from "dotenv";
-import { UserPayload, AddProductFormData } from "../../types/types";
+import { UserPayload } from "../../types/types";
 
 dotenv.config();
-
 const db = getDatabase();
 
 export const checkUsername = async (username: string): Promise<boolean> => {
@@ -58,11 +57,8 @@ export async function comparePassword(
   }
 }
 
-export async function createJWTToken(user: User) {
-  const payload: UserPayload = {
-    username: user.username,
-    email: user.email,
-  };
+export async function createJWTToken(payload: UserPayload) {
+  console.log(process.env.TOKEN_KEY);
   const token = jwt.sign(payload, process.env.TOKEN_KEY as string, {
     expiresIn: "3hr",
   });
@@ -77,7 +73,7 @@ export async function verifyJWTToken(
     jwt.verify(token, secretKey, (err, decoded) => {
       if (err) {
         console.error("Error verifying token:", err);
-        resolve(null); // Token verification failed
+        reject(); // Token verification failed
       } else {
         const userPayload = decoded as UserPayload;
         resolve(userPayload); // Token verified successfully
@@ -133,4 +129,14 @@ export const insertProductsInOrderQuery = (
   )};`;
 
   return query;
+};
+
+export const storeVerificationCodeToDB = async (
+  email: string,
+  verificationCode: number
+) => {
+  await db.query(`INSERT INTO pandoh_shop.verification_codes (user_email, verification_code)
+  VALUES ('${email}', ${verificationCode})
+  ON DUPLICATE KEY UPDATE verification_code = VALUES(verification_code);
+`);
 };

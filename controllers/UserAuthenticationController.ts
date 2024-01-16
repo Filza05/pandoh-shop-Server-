@@ -8,11 +8,15 @@ import {
   checkUserEmail,
   hashPassword,
   createJWTToken,
+  verifyJWTToken,
 } from "./utils/HelperFunctions";
 import { getDatabase } from "../utils/db";
 import { comparePassword } from "./utils/HelperFunctions";
 import { User } from "../types/DBTypes";
 import sendVerificationCode from "./utils/emailVerificationCode";
+import { VerificationCode } from "../types/DBTypes";
+import dotenv from "dotenv";
+dotenv.config();
 
 const db = getDatabase();
 
@@ -47,6 +51,34 @@ export const PerformSignUpChecks: RequestHandlerFunction = async (req, res) => {
 
 export const UserSignIn: RequestHandlerFunction = async (req, res) => {
   const signInFormData = req.body;
+
+  //CHECKING FOR ADMIN LOGIN
+  if (
+    signInFormData.email === "admin@admin.com" &&
+    signInFormData.password === "admin"
+  ) {
+    const payload: UserPayload = {
+      username: "admin",
+      email: signInFormData.email,
+      isAdmin: true,
+    };
+
+    const token = await createJWTToken(payload);
+    console.log(token);
+
+    return res
+      .cookie("authenticationToken", token, {
+        // maxAge: 2000000,
+      })
+      .status(200)
+      .send({
+        message: "Sign in successful",
+        signedInUser: {
+          username: "admin",
+          email: signInFormData.email,
+        },
+      });
+  }
   try {
     const emailExists = await checkUserEmail(signInFormData.email);
 
@@ -65,7 +97,13 @@ export const UserSignIn: RequestHandlerFunction = async (req, res) => {
     const passMatch = await comparePassword(enteredPass, user.password);
 
     if (passMatch) {
-      const token = createJWTToken(user);
+      const payload: UserPayload = {
+        username: user.username,
+        email: user.email,
+        isAdmin: false,
+      };
+
+      const token = createJWTToken(payload);
       return res
         .status(200)
         .cookie("authenticationToken", token, {
@@ -92,7 +130,13 @@ export const UserSignIn: RequestHandlerFunction = async (req, res) => {
 export const createUserAuthToken: RequestHandlerFunction = async (req, res) => {
   try {
     const userPayload = req.body;
-    const token = createJWTToken(userPayload);
+    const payload: UserPayload = {
+      username: userPayload.username,
+      email: userPayload.email,
+      isAdmin: false,
+    };
+
+    const token = createJWTToken(payload);
 
     return res
       .status(200)
@@ -113,8 +157,23 @@ export const createUserAuthToken: RequestHandlerFunction = async (req, res) => {
 };
 
 export const VerifyEmail: RequestHandlerFunction = async (req, res) => {
-  console.log(req.body);
-  return res.status(200).json({ message: "verified" });
+  try {
+    const [response] = await db.query<
+      VerificationCode[]
+    >(`SELECT verification_code
+    FROM verification_codes
+    WHERE user_email = '${req.body.email}';`);
+
+    const verificationCodeInDB = response[0].verification_code;
+    if (verificationCodeInDB.toString() === req.body.opt) {
+      return res.status(200).json({ message: "user added to DB" });
+    } else {
+      console.log("wrong otp");
+      return res.status(400).json({ error: "wrong otp" });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: "server error" });
+  }
 };
 
 export const SignUpUser: RequestHandlerFunction = async (req, res) => {
@@ -140,4 +199,18 @@ export const SignUpUser: RequestHandlerFunction = async (req, res) => {
     [hashedUser.email, hashedUser.username, hashedUser.password]
   );
   return res.status(200).json({ message: "Registration Successful" });
+};
+
+export const VerifyToken: RequestHandlerFunction = async (req, res) => {
+  if (req.cookies.authenticationToken) {
+    const authToken = req.cookies.authenticationToken;
+    const decodedData = await verifyJWTToken(
+      authToken,
+      process.env.TOKEN_KEY as string
+    );
+
+    return res.status(200).json({ userData: decodedData });
+  } else {
+    return res.status(400).json({ error: "no authentication cookie" });
+  }
 };

@@ -40,3 +40,18 @@ GROUP BY
     o.orderid, u.username, u.email, o.order_date, o.total_price, o.status;
 `;
 };
+
+export const generateFetchReviewsQuery = (productid: string) => {
+  return `SELECT
+    ur.review_id,
+    ur.review,
+    ur.rating,
+    u.username,
+    u.email AS user_email
+FROM
+    user_reviews ur
+JOIN
+    users u ON ur.user_id = u.userid
+WHERE
+    ur.product_id=${productid};`;
+};
