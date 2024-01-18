@@ -1,3 +1,5 @@
+import { Address } from "../types/DBTypes";
+
 export const FETCH_PRODUCTS_QUERY = `
 SELECT
   products.productid,
@@ -53,3 +55,25 @@ JOIN
 GROUP BY 
     o.orderid, u.username, u.email, o.order_date, o.total_price, o.status
 `;
+
+export const generateInsertAddressQuery = (
+  addressData: Address,
+  userid: number
+) => {
+  return `INSERT INTO pandoh_shop.user_addresses (user_id, address, city, state, zip_code, phone_number, country)
+     VALUES (
+    ${userid},
+    '${addressData.address}',
+    '${addressData.city}',
+    '${addressData.state}', 
+    ${addressData.zip_code},
+    '${addressData.phone_number}',
+    '${addressData.country}') 
+    ON DUPLICATE KEY UPDATE 
+    address = VALUES(address),
+    city = VALUES(city),
+    state = VALUES(state),
+    zip_code = VALUES(zip_code),
+    phone_number = VALUES(phone_number),
+    country = VALUES(country);`;
+};

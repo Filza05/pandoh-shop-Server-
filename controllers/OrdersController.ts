@@ -38,12 +38,33 @@ export const handleSuccesfulPayment = async (req: Request, res: Response) => {
         parsedProducts
       );
 
-      db.query(insertQuery);
-
+      await db.query(insertQuery);
       return res.status(200).json({ message: "order added succesfully" });
     } catch (error) {
       console.log(error);
     }
+  }
+};
+
+export const addOrderInDB = async (req: Request, res: Response) => {
+  const data = req.body;
+  const totalAmountPaid = data.total_amount;
+  const userid = req.params.userid;
+  const products = req.body.products;
+
+  try {
+    const response = await db.query<ResultSetHeader>(
+      `insert into orders (USERID, TOTAL_PRICE) values (?,?)`,
+      [userid, totalAmountPaid * 100]
+    );
+    const data: ResultSetHeader = response[0];
+
+    const insertQuery = insertProductsInOrderQuery(data.insertId, products);
+
+    await db.query(insertQuery);
+    return res.status(200).json({ message: "order added succesfully" });
+  } catch (error) {
+    return res.status(400).json({ message: "internal server error" });
   }
 };
 

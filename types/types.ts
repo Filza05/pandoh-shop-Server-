@@ -12,6 +12,7 @@ export type RequestHandlerFunction = (
 ) => Promise<Response>;
 
 export type UserPayload = {
+  userid: number;
   username: string;
   email: string;
   isAdmin: boolean;
@@ -23,4 +24,13 @@ export type AddProductFormData = {
   price: Number;
   category: string;
   images: FileList | null;
+};
+
+export type Address = {
+  address: string;
+  city: string;
+  state: string;
+  zipCode: number;
+  phoneNumber: number;
+  country: string;
 };

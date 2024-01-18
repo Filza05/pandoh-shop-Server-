@@ -58,6 +58,7 @@ export const UserSignIn: RequestHandlerFunction = async (req, res) => {
     signInFormData.password === "admin"
   ) {
     const payload: UserPayload = {
+      userid: 0,
       username: "admin",
       email: signInFormData.email,
       isAdmin: true,
@@ -73,10 +74,7 @@ export const UserSignIn: RequestHandlerFunction = async (req, res) => {
       .status(200)
       .send({
         message: "Sign in successful",
-        signedInUser: {
-          username: "admin",
-          email: signInFormData.email,
-        },
+        signedInUser: payload,
       });
   }
   try {
@@ -98,25 +96,18 @@ export const UserSignIn: RequestHandlerFunction = async (req, res) => {
 
     if (passMatch) {
       const payload: UserPayload = {
+        userid: user.userid,
         username: user.username,
         email: user.email,
         isAdmin: false,
       };
 
-      const token = createJWTToken(payload);
-      return res
-        .status(200)
-        .cookie("authenticationToken", token, {
-          httpOnly: true,
-          maxAge: 2000000,
-        })
-        .send({
-          message: "Sign in successful",
-          signedInUser: {
-            username: user.username,
-            email: user.email,
-          },
-        });
+      const token = await createJWTToken(payload);
+      console.log(token);
+      return res.cookie("authenticationToken", token, {}).status(200).send({
+        message: "Sign in successful",
+        signedInUser: payload,
+      });
     } else {
       return res.status(409).json({ error: "wrong credentials" });
     }
@@ -127,16 +118,26 @@ export const UserSignIn: RequestHandlerFunction = async (req, res) => {
   return res.status(200).json({ message: "WHATEVER" });
 };
 
-export const createUserAuthToken: RequestHandlerFunction = async (req, res) => {
+export const handleGoogleSignIn: RequestHandlerFunction = async (req, res) => {
   try {
     const userPayload = req.body;
     const payload: UserPayload = {
+      userid: userPayload.id,
       username: userPayload.username,
       email: userPayload.email,
       isAdmin: false,
     };
 
-    const token = createJWTToken(payload);
+    const emailExists = await checkUserEmail(payload.email);
+
+    if (!emailExists) {
+      await db.query(
+        "insert into users (USERID ,EMAIL, USERNAME, PASSWORD) values (?,?,?,?)",
+        [payload.userid, payload.email, payload.username, "google user"]
+      );
+    }
+
+    const token = await createJWTToken(payload);
 
     return res
       .status(200)
@@ -146,10 +147,7 @@ export const createUserAuthToken: RequestHandlerFunction = async (req, res) => {
       })
       .send({
         message: "Sign in successful",
-        signedInUser: {
-          username: userPayload.username,
-          email: userPayload.email,
-        },
+        signedInUser: payload,
       });
   } catch (error) {
     return res.status(400).json({ error: "error signing in" });
@@ -204,13 +202,18 @@ export const SignUpUser: RequestHandlerFunction = async (req, res) => {
 export const VerifyToken: RequestHandlerFunction = async (req, res) => {
   if (req.cookies.authenticationToken) {
     const authToken = req.cookies.authenticationToken;
-    const decodedData = await verifyJWTToken(
-      authToken,
-      process.env.TOKEN_KEY as string
-    );
+    console.log(authToken);
+    try {
+      const decodedData = await verifyJWTToken(
+        authToken,
+        process.env.TOKEN_KEY as string
+      );
 
-    return res.status(200).json({ userData: decodedData });
+      return res.status(200).json({ userData: decodedData });
+    } catch (error) {
+      return res.status(409).json({ error: "token expired." });
+    }
   } else {
-    return res.status(400).json({ error: "no authentication cookie" });
+    return res.status(400).json({ error: "no authentication cookie." });
   }
 };

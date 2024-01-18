@@ -6,6 +6,7 @@ import {
   VerifyEmail,
   SignUpUser,
   VerifyToken,
+  handleGoogleSignIn,
 } from "../controllers/UserAuthenticationController";
 import {
   AddProduct,
@@ -24,8 +25,9 @@ import {
   updateOrderStatus,
   getUserOrders,
   deleteOrder,
+  addOrderInDB,
 } from "../controllers/OrdersController";
-import { createUserAuthToken } from "../controllers/UserAuthenticationController";
+import { AddUserAddress, GetUserAddress } from "../controllers/UserController";
 
 const router: Router = express.Router();
 
@@ -53,6 +55,8 @@ router.get("/get-products", FetchProducts);
 
 router.post("/webhook", handleSuccesfulPayment);
 
+router.post("/add-order/:userid", addOrderInDB);
+
 //Retrieve all Orders
 router.get("/get-all-orders", getAllOrders);
 
@@ -62,7 +66,7 @@ router.post("/update-order-status/:orderid", updateOrderStatus);
 //Updating Products for Admin
 router.post("/update-product/:productid", UpdateProduct);
 
-router.post("/create-user-token", createUserAuthToken);
+router.post("/handle-google-sign-in", handleGoogleSignIn);
 
 router.get("/get-user-orders/:id", getUserOrders);
 
@@ -75,5 +79,9 @@ router.post("/add-user-review/:userid", AddUserReview);
 router.get("/get-product-reviews/:productid", GetProductReviews);
 
 router.get("/profile", VerifyToken);
+
+router.get("/get-user-address/:userid", GetUserAddress);
+
+router.post("/add-new-address/:userid", AddUserAddress);
 
 export default router;

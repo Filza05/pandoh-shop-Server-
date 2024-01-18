@@ -40,3 +40,13 @@ type OrderItem = {
   product_name: string;
   category: string;
 };
+
+export interface Address extends RowDataPacket {
+  user_addressid: number;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: number;
+  phone_number: number;
+  country: string;
+}
