@@ -55,3 +55,19 @@ JOIN
 WHERE
     ur.product_id=${productid};`;
 };
+
+export const generateInsertInCurrentAddressQuery = (
+  addressId: number,
+  userId: number
+) => {
+  return `INSERT INTO current_user_address (user_id, user_address_id)
+    VALUES (${userId}, ${addressId})
+    ON DUPLICATE KEY UPDATE user_address_id = ${addressId}`;
+};
+
+export const generateCurrentAddressQuery = (userId: number) => {
+  return `SELECT current_user_address.user_id, user_addresses.*
+    FROM current_user_address
+    JOIN user_addresses ON current_user_address.user_address_id = user_addresses.user_addressid
+    WHERE current_user_address.user_id = ${userId};`;
+};

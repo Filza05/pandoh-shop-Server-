@@ -6,6 +6,7 @@ import { insertProductsInOrderQuery } from "./utils/HelperFunctions";
 import { FETCH_ALL_ORDERS_QUERY } from "../constants/queries";
 import { Order } from "../types/DBTypes";
 import { generateGetUserOrderQuery } from "../utils/generateQueries";
+import { removeExtraAttributesFromProducts } from "./utils/HelperFunctions";
 
 const db = getDatabase();
 
@@ -25,11 +26,12 @@ export const handleSuccesfulPayment = async (req: Request, res: Response) => {
 
     const parsedProducts = JSON.parse(metaData.products);
     const userid = metaData.userid;
+    const addressid = metaData.addressid;
 
     try {
       const response = await db.query<ResultSetHeader>(
-        `insert into orders (USERID, TOTAL_PRICE) values (?,?)`,
-        [userid, totalAmountPaid]
+        `insert into orders (USERID, TOTAL_PRICE, ADDRESS) values (?,?,?)`,
+        [userid, totalAmountPaid, addressid]
       );
       const data: ResultSetHeader = response[0];
 
@@ -46,16 +48,60 @@ export const handleSuccesfulPayment = async (req: Request, res: Response) => {
   }
 };
 
+export const createStripeCheckoutSession = async (
+  req: Request,
+  res: Response
+) => {
+  const { products, userId, addressid } = req.body;
+
+  const lineItems = products.map((product: any) => {
+    return {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: product.productname,
+          description: product.description,
+          // images: [`http://localhost:4000/${product.images[0].image_url}`],
+        },
+        unit_amount: Math.round(product.price * 100),
+      },
+      quantity: product.quantity,
+    };
+  });
+
+  const productsData = removeExtraAttributesFromProducts(products);
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      metadata: {
+        products: JSON.stringify(productsData),
+        userid: userId,
+        addressid: addressid,
+      },
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      success_url: `${process.env.CLIENT_URL}/pages/order-placed-success`,
+      cancel_url: `${process.env.CLIENT_URL}/pages/payment-failed`,
+    });
+
+    return res.status(200).json({ id: session.id });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ error: "Can't process payment" });
+  }
+};
+
 export const addOrderInDB = async (req: Request, res: Response) => {
-  const data = req.body;
-  const totalAmountPaid = data.total_amount;
+  const totalAmountPaid = req.body.total_amount;
   const userid = req.params.userid;
   const products = req.body.products;
+  const addressid = req.body.addressid;
 
   try {
     const response = await db.query<ResultSetHeader>(
-      `insert into orders (USERID, TOTAL_PRICE) values (?,?)`,
-      [userid, totalAmountPaid * 100]
+      `insert into orders (USERID, TOTAL_PRICE, ADDRESS) values (?,?,?)`,
+      [userid, totalAmountPaid * 100, addressid]
     );
     const data: ResultSetHeader = response[0];
 

@@ -24,6 +24,22 @@ SELECT
     o.order_date,
     o.total_price,
     o.status,
+    (
+        SELECT 
+            JSON_OBJECT(
+                'user_addressid', ua.user_addressid,
+                'address', ua.address,
+                'city', ua.city,
+                'state', ua.state,
+                'zip_code', ua.zip_code,
+                'phone_number', ua.phone_number,
+                'country', ua.country
+            )
+        FROM 
+            user_addresses ua
+        WHERE 
+            ua.user_addressid = o.address
+    ) AS address_info,
     JSON_ARRAYAGG(
         JSON_OBJECT(
             'product_id', oi.productid,
@@ -51,9 +67,9 @@ JOIN
 JOIN 
     products p ON oi.productid = p.productid
 JOIN 
-    users u ON o.userid = u.userid  -- Join with users table to get username and email
+    users u ON o.userid = u.userid
 GROUP BY 
-    o.orderid, u.username, u.email, o.order_date, o.total_price, o.status
+    o.orderid, u.username, u.email, o.order_date, o.total_price, o.status, o.address;
 `;
 
 export const generateInsertAddressQuery = (

@@ -8,8 +8,6 @@ import { AddProductFormData } from "../types/types";
 import { ResultSetHeader } from "mysql2";
 import { Request, Response, NextFunction } from "express";
 import { FETCH_PRODUCTS_QUERY } from "../constants/queries";
-import { stripe } from "../stripe";
-import { removeExtraAttributesFromProducts } from "./utils/HelperFunctions";
 import { generateFetchReviewsQuery } from "../utils/generateQueries";
 
 const db = getDatabase();
@@ -95,49 +93,6 @@ export const FetchProducts: RequestHandlerFunction = async (
   return res;
 };
 
-export const createStripeCheckoutSession = async (
-  req: Request,
-  res: Response
-) => {
-  const { products } = req.body;
-  const { userId } = req.body;
-
-  const lineItems = products.map((product: any) => {
-    return {
-      price_data: {
-        currency: "usd",
-        product_data: {
-          name: product.productname,
-          description: product.description,
-          // images: [`http://localhost:4000/${product.images[0].image_url}`],
-        },
-        unit_amount: Math.round(product.price * 100),
-      },
-      quantity: product.quantity,
-    };
-  });
-
-  const productsData = removeExtraAttributesFromProducts(products);
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      metadata: {
-        products: JSON.stringify(productsData),
-        userid: userId,
-      },
-      payment_method_types: ["card"],
-      line_items: lineItems,
-      mode: "payment",
-      success_url: "http://whatever.com",
-      cancel_url: "http://whatever.com",
-    });
-
-    return res.status(200).json({ id: session.id });
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({ error: "Can't process payment" });
-  }
-};
 //Updating Products in database
 export const UpdateProduct: RequestHandlerFunction = async (
   req: Request,

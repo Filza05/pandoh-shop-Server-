@@ -18,7 +18,7 @@ import {
   GetProductReviews,
 } from "../controllers/ProductsController";
 import { upload } from "../multer.config";
-import { createStripeCheckoutSession } from "../controllers/ProductsController";
+import { createStripeCheckoutSession } from "../controllers/OrdersController";
 import {
   handleSuccesfulPayment,
   getAllOrders,
@@ -50,6 +50,7 @@ router.post(
 );
 
 router.post("/create-checkout-session", createStripeCheckoutSession);
+
 //Fetch all Added Products Route
 router.get("/get-products", FetchProducts);
 

@@ -129,6 +129,7 @@ export const handleGoogleSignIn: RequestHandlerFunction = async (req, res) => {
     };
 
     const emailExists = await checkUserEmail(payload.email);
+    console.log(emailExists);
 
     if (!emailExists) {
       await db.query(

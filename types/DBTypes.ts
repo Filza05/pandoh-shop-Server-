@@ -25,6 +25,7 @@ export interface Order extends RowDataPacket {
   total_price: number;
   status: string;
   order_items: OrderItem[];
+  address_info: Address;
 }
 
 export interface VerificationCode extends RowDataPacket {
